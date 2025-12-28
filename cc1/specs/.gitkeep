@@ -1,7 +1,0 @@
-# This file ensures the specs/ directory is tracked by git
-#
-# To create a new spec:
-# 1. Copy _template.md to feature-name.md
-# 2. Fill out the template (10-20 minutes)
-# 3. Link from TASKS.md using #spec:feature-name
-# 4. Update spec status as you build: draft → approved → implementing → done

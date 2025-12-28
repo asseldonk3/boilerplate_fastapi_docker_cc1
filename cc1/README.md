@@ -1,392 +1,786 @@
 # CC1 Documentation System
 
-**CC1** is a structured documentation system designed for **AI-assisted development**. It maintains institutional knowledge across Claude Code sessions, enabling effective collaboration between humans and AI.
+CC1 is a session-aware knowledge management system that maintains institutional memory across Claude Code sessions.
 
----
+## File Purposes
 
-## Philosophy
+### **VISION.md** - Product Vision & Opportunity Solution Tree
+**What:** Desired outcomes, opportunities (problems), solutions (specs), success metrics
+**When to update:** Quarterly reviews, new opportunity discovery, strategic pivots
+**Format:** Lightweight OST framework linking opportunities to specs
 
-Traditional documentation fails because it's either:
-- Too heavy (comprehensive docs that nobody maintains)
-- Too light (scattered notes that provide no context)
+**Core Sections:**
+- Desired Outcome & Product Mission
+- User Archetypes & Success Metrics
+- Opportunity Solution Tree (opportunities → solutions)
+- Current Focus & Discovery Backlog
 
-**CC1 solves this by being:**
-- **Lightweight** - Only document what matters for decisions
-- **AI-optimized** - Structured for context injection into LLMs
-- **Action-oriented** - Tied directly to active work
-- **Evidence-based** - Grounded in metrics and user feedback
+**Example OST Entry:**
+```markdown
+### Opportunity: user-onboarding-friction
+**Evidence:** 60% abandon during email verification
+**Impact:** Blocks 600+ potential users monthly
+**Target:** Reduce drop-off to <20%
 
----
+**Solutions:**
+- #spec:magic-link-auth (implementing)
+- #spec:progressive-profile (planned)
 
-## File Structure
-
-```
-cc1/
-├── README.md           # This file - system guide
-├── VISION.md          # Product vision + Opportunity Solution Tree (OST)
-├── TASKS.md           # Active task tracking (what's being worked on)
-├── LEARNINGS.md       # Knowledge capture (errors, patterns, solutions)
-├── PROJECT_INDEX.md   # Technical reference (architecture, decisions)
-├── BACKLOG.md         # Future planning (deferred features, ideas)
-└── specs/             # Feature specifications (solutions to opportunities)
-    ├── _template.md   # Template for new specs
-    └── feature-name.md # Individual feature specs
+**Assumptions to Test:**
+- [ ] Users trust passwordless auth
 ```
 
 ---
 
-## Core Workflow
+### **TASKS.md** - Current Work Tracking
+**What:** Active sprint, in-progress, completed, and blocked tasks
+**When to update:** Starting work, completing tasks, finding blockers
+**Format:** Checklist with tags (#priority, #estimate, #claude-session, #blocked-by)
 
-### 1. Discovery Phase (Define Problems)
+**Example:**
+```markdown
+## Current Sprint
+- [ ] Implement user authentication #priority:high #estimate:3d #spec:user-auth
+- [x] Add email validation #priority:medium #estimate:2h #claude-session:2025-10-04
 
-**Start with opportunities, not solutions:**
+## Blocked
+- [ ] Deploy to production #blocked-by:missing-env-credentials
+```
+
+---
+
+### **LEARNINGS.md** - Knowledge Capture
+**What:** Errors solved, patterns discovered, commands that work/fail
+**When to update:** After solving a problem worth remembering
+**Format:** Categorized entries with IDs, tags, and cross-references
+
+**Example:**
+```markdown
+## 🐛 Errors & Solutions
+### [E-012] Database Connection Timeout
+**Tags:** #database #postgresql #timeout
+**Problem:** Connection pool exhausted under load
+**Solution:** Increased pool size to 20, added connection timeout
+**Code:** src/database.py:45
+```
+
+---
+
+### **specs/** - Feature Specifications (Solutions in OST)
+**What:** Lightweight specs linking solutions to opportunities with constraints & context
+**When to create:** Multi-day features or security-critical work
+**Format:** One markdown file per solution with OST linkage
+
+**Core Sections:**
+- Opportunity Context (hypothesis, success metric)
+- Problem & Value + Scope Boundaries
+- System Context (existing code to reference)
+- Constraints & Guardrails (security, performance)
+- Requirements & Interfaces
+
+**Example frontmatter:**
+```yaml
+---
+status: implementing
+opportunity: "user-onboarding-friction"  # Links to VISION.md
+created: 2025-10-05
+estimate: 3 days
+owner: engineering
+---
+```
+
+**When to create:**
+- ✅ Takes 1+ days or security-critical
+- ✅ Needs context injection (reference existing patterns)
+- ✅ Has non-obvious constraints or edge cases
+
+**When to skip:**
+- ❌ < 2 hours or straightforward CRUD
+- ❌ Simple bug fix
+
+---
+
+### **PROJECT_INDEX.md** - Technical Reference
+**What:** File structure, dependencies, env vars, DB schema, architecture decisions
+**When to update:** Adding files/dependencies, changing architecture
+**Format:** Structured reference documentation
+
+**Example:**
+```markdown
+## Directory Structure
+- src/auth/ - Authentication & authorization
+- src/api/ - API endpoints
+- src/models/ - Database models
+
+## Dependencies
+- fastapi 0.100.0 - Web framework
+- pyjwt 2.8.0 - JWT token handling
+
+## Environment Variables
+- DATABASE_URL - PostgreSQL connection string (required)
+- JWT_SECRET - Secret for signing tokens (required)
+```
+
+---
+
+### **ROADMAP.md** - Strategic MVP Sequencing
+**What:** MVP phases, execution approach, linking opportunities to specs
+**When to update:** Planning MVP sequences, completing MVPs, reprioritizing
+**Format:** MVP phases with opportunities solved, approach, specs required, success criteria
+
+**Three-layer hierarchy:**
+- VISION.md → WHAT problems exist (opportunities + evidence)
+- ROADMAP.md → WHEN/HOW to sequence solutions (MVP phases + approach)
+- SPECS → HOW to build exactly (implementation details)
+
+**Example:**
+```markdown
+## MVP 1: Core Authentication (Weeks 1-3)
+**Solves Opportunities:**
+- #opportunity:unauthorized-access (VISION.md)
+
+**Approach:**
+1. Build JWT auth system
+2. Add role-based access control
+3. Implement password reset flow
+
+**Specs Required:**
+- #spec:jwt-auth-system #priority:high
+- #spec:rbac #priority:medium
+
+**Success Criteria:**
+- Zero unauthorized access attempts
+- Password reset completes in <2 min
+```
+
+---
+
+## Opportunity Solution Tree (OST) Integration
+
+CC1 integrates Teresa Torres' **Opportunity Solution Tree** framework for outcome-driven product development.
+
+### OST Hierarchy in CC1
 
 ```
-User Research/Feedback
-    ↓
-Add to VISION.md as Opportunity
-    ↓
-Validate with evidence (metrics, user quotes)
-    ↓
+VISION.md
+  ├─ Desired Outcome (measurable product goal)
+  │
+  ├─ Opportunity 1 (problem space)
+  │   ├─ Evidence (research/data)
+  │   ├─ Target (success criteria)
+  │   └─ Solutions
+  │       ├─ #spec:solution-a (exploring)
+  │       ├─ #spec:solution-b (implementing) → TASKS.md
+  │       └─ #spec:solution-c (planned)
+  │
+  └─ Opportunity 2 (problem space)
+      └─ Solutions
+          └─ #spec:solution-d (draft)
+```
+
+### How It Works
+
+1. **Define Desired Outcome** in VISION.md
+   - Example: "Increase activation from 40% → 70% in 90 days"
+
+2. **Identify Opportunities** (problems/pain points)
+   - Based on user research, data, feedback
+   - Each opportunity gets a slug: `user-onboarding-friction`
+
+3. **Brainstorm Solutions** to opportunities
+   - Multiple solutions per opportunity = hypothesis testing
+   - Each solution becomes a spec: `specs/magic-link-auth.md`
+
+4. **Link Spec to Opportunity**
+   - Spec frontmatter: `opportunity: "user-onboarding-friction"`
+   - Creates traceability: outcome → opportunity → solution
+
+5. **Build & Validate**
+   - Implement solution (TASKS.md references #spec:name)
+   - Measure against opportunity target
+   - Learn and iterate
+
+### OST Workflow Example
+
+```
+User Research: "60% of signups abandon during email verification"
+      ↓
+Add to VISION.md as Opportunity: user-onboarding-friction
+      ↓
+Brainstorm solutions: magic links, OAuth, progressive profile
+      ↓
+Create specs/magic-link-auth.md with:
+  - opportunity: "user-onboarding-friction"
+  - hypothesis: "Passwordless auth reduces drop-off to <20%"
+      ↓
+Add to TASKS.md: "Implement magic link endpoint #spec:magic-link-auth"
+      ↓
+Build, measure, learn
+      ↓
+Update VISION.md with results
+```
+
+### Why OST in CC1?
+
+**Prevents:**
+- ❌ Building solutions looking for problems
+- ❌ Feature bloat without clear value
+- ❌ Disconnected specs from business goals
+
+**Enables:**
+- ✅ Evidence-based decision making
+- ✅ Multiple solutions per problem (experimentation)
+- ✅ Clear traceability from outcome to implementation
+- ✅ Measurable success criteria for each solution
+
+---
+
+## Decision Guide: "Where Does This Go?"
+
+```
+┌─────────────────────────────────────────────┐
+│ Is it an instruction for Claude?            │
+│ (e.g., "Always use X", "When I say Y do Z") │
+└─────────────────┬───────────────────────────┘
+                  │
+            ┌─────┴─────┐
+            │    YES    │
+            └─────┬─────┘
+                  ▼
+         Put in CLAUDE.md
+         (project root or ~/.claude/)
+
+
+┌─────────────────────────────────────────────┐
+│ Is it strategic vision or an opportunity?   │
+│ (outcome, problem space, success metrics)   │
+└─────────────────┬───────────────────────────┘
+                  │
+            ┌─────┴─────┐
+            │    YES    │
+            └─────┬─────┘
+                  ▼
+         Add to VISION.md
+         (outcome, opportunity, or update OST)
+
+
+┌─────────────────────────────────────────────┐
+│ Is it a task to do now or soon?             │
+└─────────────────┬───────────────────────────┘
+                  │
+            ┌─────┴─────┐
+            │    YES    │
+            └─────┬─────┘
+                  ▼
+         ┌───────────────────┐
+         │ Takes > 1 day?    │
+         │ Security-critical?│
+         │ Solves opportunity│
+         │ from VISION.md?   │
+         └─────┬─────────────┘
+               │
+          ┌────┴────┐
+      YES │         │ NO
+          ▼         ▼
+    Create spec   Add to
+    in specs/     TASKS.md
+    with          directly
+    opportunity:
+    field
+
+
+┌─────────────────────────────────────────────┐
+│ Is it a problem you solved or pattern       │
+│ you discovered?                              │
+└─────────────────┬───────────────────────────┘
+                  │
+            ┌─────┴─────┐
+            │    YES    │
+            └─────┬─────┘
+                  ▼
+       Add to LEARNINGS.md
+       (with ID, tags, solution)
+
+
+┌─────────────────────────────────────────────┐
+│ Is it about MVP sequencing or planning?     │
+│ (when to build, execution approach)         │
+└─────────────────┬───────────────────────────┘
+                  │
+            ┌─────┴─────┐
+            │    YES    │
+            └─────┬─────┘
+                  ▼
+       Add to ROADMAP.md
+       (MVP phases, approach, specs needed)
+
+
+┌─────────────────────────────────────────────┐
+│ Is it reference info about the codebase?    │
+│ (structure, dependencies, schema, etc.)      │
+└─────────────────┬───────────────────────────┘
+                  │
+            ┌─────┴─────┐
+            │    YES    │
+            └─────┬─────┘
+                  ▼
+       Add to PROJECT_INDEX.md
+```
+
+---
+
+## OST-Driven Spec Workflow
+
+### 1. Discovery Phase (OST)
+```
+Desired Outcome (in VISION.md)
+      ↓
+Conduct user research / gather data
+      ↓
+Identify Opportunity (problem space)
+      ↓
+Add to VISION.md OST with:
+  - Evidence (what data shows this problem?)
+  - Target (how will we measure success?)
+  - Opportunity slug (e.g., "user-onboarding-friction")
+      ↓
 Brainstorm multiple solutions
 ```
 
-**When to create a spec:**
-- Multi-day features
-- Security-sensitive work
-- Solutions needing context injection (reference existing patterns)
-
-### 2. Planning Phase (Design Solutions)
-
-**For features requiring specs:**
-
+### 2. Solution Planning Phase
 ```
+Opportunity defined in VISION.md
+      ↓
+Choose solution to validate (hypothesis)
+      ↓
 Copy specs/_template.md → specs/solution-name.md
-    ↓
-Fill out (10-20 minutes):
-  - Link to opportunity in VISION.md
-  - Hypothesis (what will this achieve?)
-  - Constraints (what NOT to do)
-  - Context injection (existing code to reference)
-    ↓
-Add to TASKS.md with #spec:solution-name tag
-    ↓
-Mark spec status: draft → approved
+      ↓
+Fill out (10-20 min):
+  - opportunity: "slug" in frontmatter
+  - Opportunity Context (hypothesis, success metric)
+  - Constraints & Guardrails (what NOT to do)
+  - System Context (existing code to reference)
+  - Requirements & Interfaces
+      ↓
+Update status: draft → approved
+      ↓
+Add #spec:solution-name to VISION.md under opportunity
 ```
 
-### 3. Implementation Phase (Build)
-
-**Active development:**
-
+### 3. Implementation Phase
 ```
-Work from TASKS.md
-    ↓
-Reference spec for constraints/context
-    ↓
+Approved Spec (with opportunity link)
+      ↓
+Create tasks in TASKS.md referencing spec
+  Example: "Implement magic link #spec:magic-link-auth"
+      ↓
 Update spec status: approved → implementing
-    ↓
-Capture blockers/learnings in LEARNINGS.md
-    ↓
-Mark tasks complete in TASKS.md
+      ↓
+Update VISION.md spec status: (planned) → (implementing)
+      ↓
+Build solution (Claude generates code)
+      ↓
+Run Acceptance Checks from spec
 ```
 
-### 4. Validation Phase (Measure Results)
-
-**After shipping:**
-
+### 4. Validation Phase
 ```
-Measure against success metrics
-    ↓
-Update VISION.md with results (✅ validated or ❌ invalidated)
-    ↓
+Solution Complete
+      ↓
 Update spec status: implementing → done
-    ↓
-Move task to "Completed" in TASKS.md
+      ↓
+Measure against opportunity target (from VISION.md)
+      ↓
+Did it achieve the hypothesis?
+      ↓
+    ┌────┴────┐
+YES │         │ NO
+    ▼         ▼
+Document    Learn why
+learnings   & iterate
+    │         │
+    └────┬────┘
+         ▼
+Update VISION.md with:
+  - Results
+  - Next steps
+  - Pivot or double-down decision
+      ↓
+Document in LEARNINGS.md
+      ↓
+Update PROJECT_INDEX.md with new files/deps
 ```
 
 ---
 
-## Decision Flowchart
+## Spec Size Guidelines
 
-**"Where should I document X?"**
+| Implementation Time | Spec Needed? | Spec Length | Time to Write |
+|---------------------|--------------|-------------|---------------|
+| < 2 hours | ❌ No | N/A | N/A |
+| 2-8 hours | ⚠️ Optional | ~80-120 lines | 10-15 min |
+| 1-3 days | ✅ Yes | ~120-200 lines | 15-25 min |
+| 1+ weeks | ✅✅ Definitely | ~200-350 lines | 30-45 min |
+
+**Rule of thumb:** Lightweight specs focus on OST linkage, constraints, and context - not exhaustive checklists.
+
+---
+
+## CLAUDE.md vs CC1 Clarity
+
+### The Golden Rule
+
+**`CLAUDE.md` = AI's instruction manual (how to behave)**
+**`CC1/` = Project's knowledge base (what exists)**
+
+### Examples
+
+| Information | Goes In | Why |
+|-------------|---------|-----|
+| "Always explain bash commands before running" | `CLAUDE.md` | Behavior preference |
+| "This project uses pytest for tests" | `PROJECT_INDEX.md` | Project fact |
+| "When I say 'refactor', follow clean code" | `CLAUDE.md` | Instruction for Claude |
+| "We solved DB timeout by increasing pool" | `LEARNINGS.md` | Project knowledge |
+| "Use functional components in this project" | `CLAUDE.md` (project) | Project-specific instruction |
+| "User table has columns: id, email, created_at" | `PROJECT_INDEX.md` | Reference data |
+
+### Global vs Project vs Subdirectory CLAUDE.md
+
+Claude Code supports CLAUDE.md at three levels with inheritance:
 
 ```
-Is it about WHAT to build or WHY?
-├─ Yes → VISION.md (opportunities, evidence, outcomes)
-│
-└─ No → Is it about ACTIVE work?
-    ├─ Yes → TASKS.md (current sprint, in-progress, blockers)
-    │
-    └─ No → Is it about HOW to build something?
-        ├─ Yes → Need a spec?
-        │   ├─ Multi-day feature → specs/feature-name.md
-        │   ├─ Security-sensitive → specs/feature-name.md
-        │   ├─ Needs context injection → specs/feature-name.md
-        │   └─ Simple task → Just TASKS.md
-        │
-        └─ No → Is it about something we LEARNED?
-            ├─ Yes → LEARNINGS.md (errors, patterns, gotchas)
-            │
-            └─ No → Is it technical reference?
-                ├─ Yes → PROJECT_INDEX.md (architecture, decisions)
-                │
-                └─ Is it for LATER?
-                    └─ Yes → BACKLOG.md (future ideas, deferred work)
+~/.claude/CLAUDE.md                    (Level 1: Global)
+       ↓
+   Universal AI preferences
+   for ALL projects
+       ↓
+ProjectRoot/CLAUDE.md                  (Level 2: Project)
+       ↓
+   Project-specific overrides
+   and context
+       ↓
+ProjectRoot/subdir/CLAUDE.md          (Level 3: Subdirectory)
+       ↓
+   Directory-specific rules
+   (e.g., frontend/ vs backend/)
+       ↓
+   ═══════════════════════════════════
+   Final merged instructions for Claude
+   (More specific overrides more general)
 ```
 
----
+**Level 1: Global (`~/.claude/CLAUDE.md`)**
+- Your universal working style with Claude across ALL projects
+- Output preferences, communication style, general coding standards
+- Example: "Always explain bash commands before running them"
+- **Applies to:** Every project, every directory
 
-## File-Specific Guides
+**Level 2: Project Root (`ProjectRoot/CLAUDE.md`)**
+- Project-specific coding conventions and context
+- Tech stack specifics, architecture patterns for THIS project
+- Example: "This project uses TypeScript with strict mode enabled"
+- **Overrides:** Global settings
+- **Applies to:** Entire project (unless overridden by subdirectory)
 
-### VISION.md (Opportunity Solution Tree)
-**Purpose:** Define WHAT problems exist and WHY they matter
+**Level 3: Subdirectory (`ProjectRoot/subdir/CLAUDE.md`)**
+- Directory-specific rules for a part of the codebase
+- Different conventions for frontend vs backend, or per microservice
+- Example: In `frontend/CLAUDE.md`: "Use React functional components only"
+- **Overrides:** Project root and global settings
+- **Applies to:** Only that directory and its subdirectories
 
-**Structure:**
-- Product vision (target outcome)
-- Current focus opportunities (active problems being solved)
-- Solutions being explored (hypotheses, specs, status)
-- Results (validated/invalidated learnings)
-- Backlog opportunities (future problems to tackle)
+**Example hierarchy:**
+```
+my-project/
+├── CLAUDE.md                    # Project: "Use ESLint standard config"
+├── frontend/
+│   ├── CLAUDE.md                # Frontend: "Use React hooks, no class components"
+│   └── components/              # Inherits: Global → Project → frontend/
+├── backend/
+│   ├── CLAUDE.md                # Backend: "Use async/await, no callbacks"
+│   └── api/                     # Inherits: Global → Project → backend/
+└── cc1/                         # Inherits: Global → Project
 
-**Update when:**
-- Discovering new user problems
-- Starting work on an opportunity
-- Completing experiments (add results)
-
-**Example entry:**
-```markdown
-### 🎯 Opportunity: api-response-time-degradation
-**Problem:** API endpoints taking >2s to respond under load
-**Evidence:** P95 latency increased from 300ms to 2.1s (last week)
-**Impact:** 20% increase in user complaints, 15% drop in API usage
-
-#### Solutions:
-- 💡 Query Caching Layer 🔄
-  - Hypothesis: Redis cache reduces DB hits by 70%, latency <500ms
-  - Spec: cc1/specs/query-caching.md
-  - Status: Implementing
+Result when working in frontend/:
+  Global rules + Project rules + frontend/ rules
+  (frontend/ rules take precedence)
 ```
 
+**When to use each level:**
+- **Global:** Universal preferences you want everywhere (coding style, communication)
+- **Project:** Project-wide conventions (language version, framework patterns)
+- **Subdirectory:** Different rules for different parts of codebase (frontend/backend differences)
+
 ---
 
-### TASKS.md (Active Work Tracking)
-**Purpose:** Track what's being worked on RIGHT NOW
+## CC1 Workflow Commands
 
-**Structure:**
-- Current Sprint (immediate work)
-- In Progress (actively being done)
-- Completed (recently finished)
-- Blocked (waiting on dependencies)
+### `/cc1-init`
+**Initialize CC1 in existing or new project** (no tech stack assumptions)
+- Creates cc1/ directory structure
+- Analyzes existing code to pre-populate PROJECT_INDEX.md
+- Detects tech stack, dependencies, environment variables
+- Adds specs/ system with template
+- Copies this README to project
 
-**Update when:**
-- Starting work (move to "In Progress")
-- Completing tasks (move to "Completed")
-- Getting blocked (move to "Blocked" with reason)
+**Use when:** Starting CC1 on any project (existing or new, any language/framework)
 
-**Task format:**
-```markdown
-- [ ] Task description #priority:high #estimate:2h #spec:feature-name
+### `/cc1-boilerplatev2`
+**Initialize complete FastAPI + Docker + PostgreSQL + CC1 project**
+- Clones GitHub template with full tech stack
+- Sets up Docker, PostgreSQL, FastAPI boilerplate
+- Includes CC1 system pre-configured
+- Production-ready structure
+
+**Use when:** Starting brand new Python/FastAPI project from scratch
+
+### `/cc1-update`
+**Review session work and suggest numbered doc updates**
+- Updates TASKS.md (move completed, add new, mark blocked)
+- Updates LEARNINGS.md (add errors solved, patterns found)
+- Updates PROJECT_INDEX.md (new files, deps, schema changes)
+- Updates ROADMAP.md (adjust MVP priorities based on learnings)
+- Updates specs/ (change status, document decisions)
+- Interactive: shows numbered suggestions, you choose which to apply
+
+**Use when:** After each coding session to capture knowledge
+
+### `/cc1-audit-improve`
+**Audit CC1 docs against actual codebase**
+- Validates TASKS.md (completed tasks actually done?)
+- Validates PROJECT_INDEX.md (files/deps exist? schema accurate?)
+- Validates specs/ (status consistent? contracts match code?)
+- Checks for stale information, missing docs, contradictions
+- Interactive: shows numbered findings, you choose which to fix
+
+**Use when:** Weekly or when docs feel outdated
+
+---
+
+## Complete CC1 Workflow Visualization
+
 ```
-
----
-
-### specs/feature-name.md (Solution Specs)
-**Purpose:** Guardrails and context for AI-assisted development
-
-**NOT a comprehensive checklist** - focus on:
-- **Opportunity linkage** (which problem from VISION.md?)
-- **Hypothesis** (what will this achieve?)
-- **Constraints** (what NOT to do - security, performance)
-- **Context injection** (existing code patterns to follow)
-- **Interfaces** (API contracts, schemas)
-
-**Update when:**
-- Creating (draft → approved)
-- Starting build (approved → implementing)
-- Shipping (implementing → done)
-
-**Spec statuses:**
-- `draft` - Being written
-- `approved` - Ready to implement
-- `implementing` - Actively being built
-- `done` - Shipped and validated
-- `deprecated` - No longer relevant
-
----
-
-### LEARNINGS.md (Knowledge Capture)
-**Purpose:** Document solutions to problems so they're not forgotten
-
-**Structure:**
-- Errors & Solutions (debugging wins)
-- Patterns & Best Practices (reusable approaches)
-- Gotchas & Pitfalls (things to avoid)
-
-**Update when:**
-- Solving a non-obvious error
-- Discovering a pattern worth reusing
-- Finding a gotcha that cost significant time
-
-**Entry format:**
-```markdown
-**[E-001] Error:** Database connection timeout in Docker
-**Solution:** Add `POSTGRES_HOST=db` to .env (not localhost)
-**Context:** Docker Compose networking requires service name
-**Reference:** docker-compose.yml:15
+┌─────────────────────────────────────────────────────────────┐
+│                    PROJECT INITIALIZATION                    │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │                   │
+              New project         Existing project
+              with stack          (any language)
+                    │                   │
+                    ▼                   ▼
+          /cc1-boilerplatev2      /cc1-init
+          (FastAPI template)      (analyzes & sets up)
+                    │                   │
+                    └─────────┬─────────┘
+                              ▼
+                    ┌─────────────────────┐
+                    │  CC1 System Ready   │
+                    │  - VISION.md        │
+                    │  - ROADMAP.md       │
+                    │  - TASKS.md         │
+                    │  - LEARNINGS.md     │
+                    │  - specs/           │
+                    │  - PROJECT_INDEX.md │
+                    │  - README.md        │
+                    └─────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                    FEATURE DEVELOPMENT                       │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │  New Feature Idea   │
+                    └─────────────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │ Multi-day or      │
+                    │ security-critical?│
+                    └─────────┬─────────┘
+                              │
+                    ┌─────────┴─────────┐
+                YES │                   │ NO
+                    ▼                   ▼
+        ┌───────────────────┐   ┌──────────────┐
+        │ Create spec from  │   │ Add directly │
+        │ specs/_template   │   │ to TASKS.md  │
+        └───────────────────┘   └──────────────┘
+                    │                   │
+                    │ Fill out:         │
+                    │ - Constraints     │
+                    │ - Context         │
+                    │ - Acceptance      │
+                    │   Checks          │
+                    │                   │
+                    ▼                   │
+        ┌───────────────────┐           │
+        │ Update status:    │           │
+        │ draft → approved  │           │
+        └───────────────────┘           │
+                    │                   │
+                    └─────────┬─────────┘
+                              ▼
+                    ┌─────────────────────┐
+                    │   Implementation    │
+                    │ (Claude generates)  │
+                    └─────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │ Run acceptance      │
+                    │ checks / tests      │
+                    └─────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │   Mark complete     │
+                    │ Update spec: done   │
+                    └─────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                  KNOWLEDGE CAPTURE                           │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │   /cc1-update       │
+                    │ (after session)     │
+                    └─────────────────────┘
+                              │
+                              ▼
+                ┌─────────────────────────────┐
+                │ Claude analyzes session:    │
+                │ - Tasks completed?          │
+                │ - Errors solved?            │
+                │ - New files created?        │
+                │ - Specs status changed?     │
+                │ - Learnings discovered?     │
+                └─────────────────────────────┘
+                              │
+                              ▼
+                ┌─────────────────────────────┐
+                │ Shows numbered suggestions  │
+                │ You choose which to apply   │
+                └─────────────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │  Docs updated with  │
+                    │  session knowledge  │
+                    └─────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                    QUALITY ASSURANCE                         │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │ /cc1-audit-improve  │
+                    │ (weekly/as needed)  │
+                    └─────────────────────┘
+                              │
+                              ▼
+                ┌─────────────────────────────┐
+                │ Claude validates:           │
+                │ - Completed tasks exist?    │
+                │ - Docs match codebase?      │
+                │ - Specs accurate?           │
+                │ - Stale information?        │
+                │ - Missing documentation?    │
+                └─────────────────────────────┘
+                              │
+                              ▼
+                ┌─────────────────────────────┐
+                │ Shows numbered findings     │
+                │ You choose which to fix     │
+                └─────────────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │  Docs synchronized  │
+                    │  with reality       │
+                    └─────────────────────┘
+                              │
+                    ┌─────────┴─────────┐
+                    │   Repeat cycle    │
+                    └─────────┬─────────┘
+                              │
+                              ▼
+                    (back to Feature Development)
 ```
-
----
-
-### PROJECT_INDEX.md (Technical Reference)
-**Purpose:** Architecture, tech stack, key decisions
-
-**Structure:**
-- Tech Stack (languages, frameworks, tools)
-- Architecture Overview (system design)
-- Key Decisions (ADRs - architectural decision records)
-- Dependencies (critical external services)
-
-**Update when:**
-- Adding new technologies
-- Making architectural changes
-- Documenting key technical decisions
-
----
-
-### BACKLOG.md (Future Planning)
-**Purpose:** Capture ideas and deferred work
-
-**Structure:**
-- Next Up (validated but not scheduled)
-- Ideas (unvalidated concepts)
-- Deferred (intentionally postponed)
-
-**Update when:**
-- Deferring work from current sprint
-- Capturing new feature ideas
-- Validating opportunities (promote to VISION.md)
-
----
-
-## CC1 with Claude Code
-
-### Slash Commands
-- `/cc1-init` - Initialize CC1 in a new project
-- `/cc1-update` - Review session work and suggest documentation updates
-- `/cc1-audit-improve` - Audit CC1 docs for accuracy and improvements
-
-### Workflow with AI
-1. **Session start:** Claude reads `TASKS.md` for context
-2. **During work:** Claude references specs for constraints
-3. **Session end:** Use `/cc1-update` to capture learnings
-4. **Approval required:** Review suggested updates before applying
 
 ---
 
 ## Best Practices
 
-### ✅ Do:
-- Link specs to opportunities in VISION.md
-- Update TASKS.md as work progresses
-- Capture non-obvious learnings in LEARNINGS.md
-- Keep specs lightweight (10-20 min to write)
-- Use tags (#priority, #spec, #blocked-by) for organization
+### 1. Keep It Current
+- Run `/cc1-update` after each significant session
+- Run `/cc1-audit-improve` weekly or when things feel stale
 
-### ❌ Don't:
-- Auto-update CC1 files without approval
-- Document trivial changes
-- Create specs for simple tasks
-- Let TASKS.md become stale
-- Skip evidence in VISION.md
+### 2. Be Selective
+- Don't document trivial changes
+- Focus on insights that help future you/Claude
+- Quality > quantity
 
----
+### 3. Use Cross-References
+- Link tasks to specs: `#spec:feature-name`
+- Link to learnings: `see LEARNINGS.md [E-012]`
+- Reference decisions: `see PROJECT_INDEX.md [D-005]`
 
-## Example Workflow
+### 4. Maintain Spec Lifecycle
+- Draft → get feedback/refine
+- Approved → ready to implement
+- Implementing → work in progress
+- Done → feature complete, keep for reference
+- Deprecated → no longer relevant, archive or delete
 
-**Scenario:** Adding user authentication
-
-1. **Discovery** - Add to VISION.md:
-   ```markdown
-   🎯 Opportunity: unauthorized-api-access
-   Problem: Anyone can call our API endpoints without authentication
-   Evidence: Security audit flagged this as critical risk
-   ```
-
-2. **Planning** - Create spec:
-   ```bash
-   cp cc1/specs/_template.md cc1/specs/jwt-auth-system.md
-   # Fill out: opportunity, hypothesis, constraints, context
-   ```
-
-3. **Implement** - Add to TASKS.md:
-   ```markdown
-   - [ ] Implement JWT authentication #priority:high #spec:jwt-auth-system
-   ```
-
-4. **Build** - Work from spec, update status:
-   ```markdown
-   status: implementing
-   ```
-
-5. **Ship** - Update VISION.md with results:
-   ```markdown
-   📊 2025-01-20 - ✅ JWT auth deployed, zero unauthorized access attempts
-   ```
-
-6. **Document** - Add to LEARNINGS.md if needed:
-   ```markdown
-   **[E-015] Error:** JWT token validation failing in production
-   **Solution:** Secret key must be 32+ characters for HS256
-   ```
+### 5. Archive Old Information
+After 3-6 months, consider:
+- Moving completed specs to `specs/archive/`
+- Moving old tasks to "Completed Archive" section
+- Keeping only current/relevant information easily accessible
 
 ---
 
-## Integration with CLAUDE.md
+## Tips for Effective Vibe Coding with CC1
 
-**CLAUDE.md** (global or project) contains **instructions for Claude**:
-- Coding standards
-- Response style preferences
-- Workflow rules
+### Before Coding
+1. Check VISION.md for related opportunity
+2. If feature > 1 day, create lightweight spec (10-20 min)
+3. Focus on: hypothesis, constraints, system context
+4. Skip exhaustive checklists - just capture what matters
 
-**CC1 files** contain **project knowledge**:
-- What problems exist (VISION.md)
-- What's being built (TASKS.md)
-- What's been learned (LEARNINGS.md)
+### During Coding
+1. Reference existing patterns from spec's System Context
+2. Check LEARNINGS.md for similar problems solved
+3. Let Claude generate code guided by constraints
+4. Test against the success metric from spec
 
-**Rule:** If it's phrased as "Claude, do X" → CLAUDE.md. If it's information Claude needs → CC1.
-
----
-
-## Maintenance
-
-### Weekly:
-- Review TASKS.md (move completed items, clean up stale tasks)
-- Update VISION.md with experiment results
-
-### Monthly:
-- Archive old completed tasks from TASKS.md
-- Review BACKLOG.md (promote validated ideas to VISION.md)
-
-### As-needed:
-- Run `/cc1-audit-improve` to check for stale documentation
+### After Coding
+1. Run `/cc1-update` to document changes
+2. Update VISION.md with results (did hypothesis hold?)
+3. Add valuable learnings, not trivial changes
+4. Update spec status: implementing → done
 
 ---
 
-## Questions?
+## Quick Reference
 
-**"Do I need a spec for every feature?"**
-No. Only for multi-day features, security work, or when you need to inject context about existing patterns.
-
-**"What if I don't have user research?"**
-Use proxy evidence: support tickets, analytics, your own pain points. Document assumptions and validate incrementally.
-
-**"How detailed should specs be?"**
-10-20 minutes to write. Focus on constraints and context, not exhaustive checklists.
-
-**"When do I update VISION.md?"**
-When you discover problems, start solutions, or finish experiments. It's the source of truth for "why are we building this?"
+**New project with specific stack?** Run `/cc1-boilerplatev2` (FastAPI template)
+**Existing project or any new project?** Run `/cc1-init` (analyzes & sets up)
+**Define product vision?** Create/update `VISION.md` with desired outcomes
+**Found user problem?** Add opportunity to `VISION.md` OST with evidence
+**Validating solution?** Create spec with `opportunity:` field linking to VISION.md
+**Starting new feature?** Create spec if > 1 day (reference opportunity from VISION.md)
+**Finished work?** Run `/cc1-update`
+**Things feel outdated?** Run `/cc1-audit-improve`
+**Don't know where to put something?** Check Decision Guide above
+**Confused about CLAUDE.md vs CC1?** See "Golden Rule" section
+**CLAUDE.md at different levels?** See "Global vs Project vs Subdirectory" section
+**What's OST?** See "Opportunity Solution Tree Integration" section
 
 ---
 
-**Version:** CC1 v2.0
-**Last Updated:** {{TODAY}}
+_Last updated: 2025-10-05 (Added OST integration)_
