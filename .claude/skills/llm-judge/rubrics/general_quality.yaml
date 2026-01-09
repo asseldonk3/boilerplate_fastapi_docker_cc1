@@ -1,0 +1,73 @@
+# General Quality Rubric
+# Use for evaluating any AI-generated response
+
+name: general_quality
+version: "1.0"
+description: General-purpose evaluation rubric for AI outputs
+
+dimensions:
+  accuracy:
+    weight: 0.35
+    description: "Factual correctness and absence of errors"
+    scale:
+      5: "Entirely correct with no factual errors"
+      4: "Mostly correct with minor, inconsequential errors"
+      3: "Generally correct but contains some errors that don't fundamentally mislead"
+      2: "Contains significant errors that could mislead the user"
+      1: "Fundamentally incorrect or contains dangerous misinformation"
+
+  completeness:
+    weight: 0.25
+    description: "Coverage of required information to answer the question"
+    scale:
+      5: "Fully addresses all aspects of the prompt with appropriate depth"
+      4: "Addresses main aspects with minor omissions that don't significantly impact usefulness"
+      3: "Addresses core question but missing important supporting information"
+      2: "Partial answer missing critical information needed to be useful"
+      1: "Fails to address the question or provides irrelevant information"
+
+  clarity:
+    weight: 0.20
+    description: "Clear communication and logical structure"
+    scale:
+      5: "Crystal clear, well-organized, easy to understand and act upon"
+      4: "Clear and organized with minor areas that could be improved"
+      3: "Understandable but requires effort to parse; some organizational issues"
+      2: "Confusing structure or unclear explanations that hinder comprehension"
+      1: "Incoherent, disorganized, or unintelligible"
+
+  helpfulness:
+    weight: 0.20
+    description: "Practical utility and actionability for the user"
+    scale:
+      5: "Highly actionable, provides exactly what user needs with clear next steps"
+      4: "Useful and actionable with minor gaps in practical guidance"
+      3: "Somewhat helpful but user needs to fill in gaps or do additional research"
+      2: "Limited practical value; generic or overly theoretical"
+      1: "Not useful for the user's actual needs"
+
+# Aggregate scoring formula
+aggregate: "weighted_average"
+
+# Minimum thresholds for deployment
+thresholds:
+  pass: 3.5
+  excellent: 4.5
+  fail: 2.0
+
+# Anti-verbosity guidance
+verbosity_note: |
+  Penalize responses that:
+  - Repeat information unnecessarily
+  - Include generic filler phrases ("I hope this helps", "Let me explain")
+  - Over-explain simple concepts
+  - Add unnecessary caveats or disclaimers
+
+# Example calibration (few-shot)
+calibration_examples:
+  - score: 5
+    response_type: "Complete, accurate, concise answer with actionable steps"
+  - score: 3
+    response_type: "Correct but overly verbose or missing some details"
+  - score: 1
+    response_type: "Incorrect information or completely misses the question"

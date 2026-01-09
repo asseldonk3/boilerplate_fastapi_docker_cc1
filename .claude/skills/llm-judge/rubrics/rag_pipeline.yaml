@@ -1,0 +1,97 @@
+# RAG Pipeline Evaluation Rubric
+# Based on Ragas methodology for retrieval-augmented generation
+
+name: rag_pipeline
+version: "1.0"
+description: Specialized rubric for evaluating RAG pipeline outputs
+
+dimensions:
+  faithfulness:
+    weight: 0.35
+    description: "How well the answer is grounded in the retrieved context"
+    methodology: |
+      Break answer into atomic claims. For each claim, verify if it can be
+      inferred from the retrieved context. Score = supported_claims / total_claims
+    scale:
+      5: "100% of claims are supported by the context"
+      4: "90%+ claims supported; unsupported claims are minor/tangential"
+      3: "70-90% claims supported; some unsupported claims are important"
+      2: "50-70% claims supported; significant hallucination present"
+      1: "<50% claims supported; answer largely hallucinated"
+
+  answer_relevancy:
+    weight: 0.30
+    description: "How well the answer addresses the original question"
+    methodology: |
+      Generate artificial questions from the answer.
+      Measure semantic similarity between original question and generated questions.
+    scale:
+      5: "Answer directly and completely addresses the question"
+      4: "Answer addresses the question with minor tangents"
+      3: "Answer partially addresses the question; some irrelevant content"
+      2: "Answer loosely related to question; mostly tangential"
+      1: "Answer doesn't address the question at all"
+
+  context_relevancy:
+    weight: 0.20
+    description: "Quality of retrieved context for the question"
+    methodology: |
+      Evaluate if the retrieved chunks contain information needed to answer.
+      Check for noise, irrelevant passages, or missing key information.
+    scale:
+      5: "All retrieved context is highly relevant; contains everything needed"
+      4: "Most context is relevant; minor noise"
+      3: "Mixed relevance; useful information buried in noise"
+      2: "Mostly irrelevant context; key information missing"
+      1: "Context is completely irrelevant to the question"
+
+  context_utilization:
+    weight: 0.15
+    description: "How well available context is used in the answer"
+    scale:
+      5: "All relevant information from context is incorporated"
+      4: "Most relevant information used; minor omissions"
+      3: "Some relevant context unused; answer could be more comprehensive"
+      2: "Significant relevant context ignored"
+      1: "Context largely ignored; answer is mostly from model's parametric knowledge"
+
+# RAG-specific checks
+quality_checks:
+  - name: "no_unsupported_claims"
+    description: "Flag any claims not traceable to context"
+    severity: "high"
+
+  - name: "source_attribution"
+    description: "Check if sources are properly cited (if required)"
+    severity: "medium"
+
+  - name: "context_coverage"
+    description: "Ensure answer uses breadth of relevant context"
+    severity: "medium"
+
+# Thresholds
+thresholds:
+  production_ready: 4.0
+  needs_review: 3.0
+  fail: 2.0
+
+# Faithfulness calculation helper
+faithfulness_calculation: |
+  1. Extract atomic claims from answer:
+     - "The company was founded in 2010"
+     - "Revenue grew 20% YoY"
+     - "Headquarters is in San Francisco"
+
+  2. For each claim, check against context:
+     - Claim 1: [SUPPORTED] - Context says "Founded in 2010"
+     - Claim 2: [UNSUPPORTED] - Context doesn't mention revenue
+     - Claim 3: [SUPPORTED] - Context confirms location
+
+  3. Score: 2/3 = 0.67 → Scale score: 3
+
+# Integration notes
+notes: |
+  For RAG evaluation, consider also:
+  - Latency of retrieval + generation
+  - Number of retrieved chunks vs useful chunks
+  - Retrieval recall (does the system find all relevant docs?)
